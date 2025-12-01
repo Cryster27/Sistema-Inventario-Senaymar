@@ -113,4 +113,4 @@ MIT
 
 ## 👤 Autor
 
-Tu Nombre - Proyecto de Sistema de Gestión
+Cristopher Jesus Cabrera Eguia
