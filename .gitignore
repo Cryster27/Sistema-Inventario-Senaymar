@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+package-lock.json
+yarn.lock
+
+# Variables de entorno
+.env
+
+# PDFs generados
+pdfs/*.pdf
+!pdfs/.gitkeep
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+
+# Tests
+coverage/
+.nyc_output/
+
+# Temporales
+temp/
+tmp/
+*.tmp
