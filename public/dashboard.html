@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema Mercería</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🏪 Mercería</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item active">
+                📊 Dashboard
+            </a>
+            <a href="/pos.html" class="nav-item">
+                🛒 Punto de Venta
+            </a>
+            <a href="/productos.html" class="nav-item">
+                📦 Productos
+            </a>
+            <a href="/ventas.html" class="nav-item">
+                📋 Ventas
+            </a>
+            <a href="/usuarios.html" class="nav-item" id="navUsuarios" style="display: none;">
+                👥 Usuarios
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="btn-menu" onclick="toggleSidebar()">☰</button>
+            <h1>Dashboard</h1>
+            <div class="top-bar-actions">
+                <span id="currentDate"></span>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="container">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <h3>Ventas Hoy</h3>
+                        <p class="stat-value" id="ventasHoy">S/ 0.00</p>
+                        <small id="cantidadVentasHoy">0 ventas</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <h3>Ventas del Mes</h3>
+                        <p class="stat-value" id="ventasMes">S/ 0.00</p>
+                        <small id="cantidadVentasMes">0 ventas</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-content">
+                        <h3>Productos</h3>
+                        <p class="stat-value" id="totalProductos">0</p>
+                        <small id="productosActivos">0 activos</small>
+                    </div>
+                </div>
+
+                <div class="stat-card alert">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-content">
+                        <h3>Stock Bajo</h3>
+                        <p class="stat-value" id="stockBajo">0</p>
+                        <small>Requieren atención</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos con Stock Bajo -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>⚠️ Productos con Stock Bajo</h3>
+                </div>
+                <div class="card-body">
+                    <div id="lowStockList" class="table-container">
+                        <p class="text-muted">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos Más Vendidos -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>🏆 Productos Más Vendidos</h3>
+                </div>
+                <div class="card-body">
+                    <div id="topProductsList" class="table-container">
+                        <p class="text-muted">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Últimas Ventas -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 Últimas Ventas</h3>
+                    <a href="/ventas.html" class="btn-link">Ver todas</a>
+                </div>
+                <div class="card-body">
+                    <div id="recentSalesList" class="table-container">
+                        <p class="text-muted">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

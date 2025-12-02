@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto de Venta - Sistema Mercería</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/pos.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🏪 Mercería</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="/pos.html" class="nav-item active">🛒 Punto de Venta</a>
+            <a href="/productos.html" class="nav-item">📦 Productos</a>
+            <a href="/ventas.html" class="nav-item">📋 Ventas</a>
+            <a href="/usuarios.html" class="nav-item" id="navUsuarios" style="display: none;">👥 Usuarios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="btn-menu" onclick="toggleSidebar()">☰</button>
+            <h1>🛒 Punto de Venta</h1>
+            <div class="top-bar-actions">
+                <span id="currentDate"></span>
+            </div>
+        </div>
+
+        <!-- POS Content -->
+        <div class="pos-container">
+            <!-- Panel de Búsqueda y Productos -->
+            <div class="pos-left">
+                <div class="search-section">
+                    <input 
+                        type="text" 
+                        id="searchProduct" 
+                        class="search-input" 
+                        placeholder="🔍 Buscar producto por código o nombre..."
+                        autocomplete="off"
+                    >
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+
+                <div class="products-section">
+                    <h3>Productos Disponibles</h3>
+                    <div class="products-grid" id="productsGrid">
+                        <p class="text-muted">Cargando productos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel del Carrito -->
+            <div class="pos-right">
+                <div class="cart-header">
+                    <h2>Carrito de Venta</h2>
+                    <button class="btn-clear" onclick="clearCart()">🗑️ Limpiar</button>
+                </div>
+
+                <div class="cart-items" id="cartItems">
+                    <div class="empty-cart">
+                        <p>🛒 El carrito está vacío</p>
+                        <small>Agrega productos para iniciar la venta</small>
+                    </div>
+                </div>
+
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">S/ 0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span><strong>TOTAL:</strong></span>
+                        <span id="total"><strong>S/ 0.00</strong></span>
+                    </div>
+                </div>
+
+                <div class="cart-actions">
+                    <button class="btn btn-secondary btn-block" onclick="previewSale()" id="btnPreview" disabled>
+                        👁️ Vista Previa
+                    </button>
+                    <button class="btn btn-success btn-block" onclick="completeSale()" id="btnComplete" disabled>
+                        ✅ Completar Venta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/pos.js"></script>
+</body>
+</html>

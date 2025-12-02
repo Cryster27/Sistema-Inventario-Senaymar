@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const saleController = require('../controllers/saleController');
 const pdfController = require('../controllers/pdfController');
+const { verifyToken, requireAdminOrCajero } = require('../middlewares/auth');
 const { body, param, query } = require('express-validator');
 
 // ========================================
@@ -51,41 +52,47 @@ const validateSaleId = [
  * GET /api/sales
  * Obtener todas las ventas
  * Query params: ?limit=100&offset=0
+ * Requiere: Autenticación
  */
-router.get('/', saleController.getAllSales);
+router.get('/', verifyToken, saleController.getAllSales);
 
 /**
  * GET /api/sales/stats
  * Obtener estadísticas generales de ventas
  * IMPORTANTE: Esta ruta debe ir ANTES de /api/sales/:id
+ * Requiere: Autenticación
  */
-router.get('/stats', saleController.getStats);
+router.get('/stats', verifyToken, saleController.getStats);
 
 /**
  * GET /api/sales/today
  * Obtener ventas del día actual
+ * Requiere: Autenticación
  */
-router.get('/today', saleController.getTodaySales);
+router.get('/today', verifyToken, saleController.getTodaySales);
 
 /**
  * GET /api/sales/top-products
  * Obtener productos más vendidos
  * Query params: ?limit=10
+ * Requiere: Autenticación
  */
-router.get('/top-products', saleController.getTopProducts);
+router.get('/top-products', verifyToken, saleController.getTopProducts);
 
 /**
  * GET /api/sales/range
  * Obtener ventas por rango de fechas
  * Query params: ?start=2025-01-01&end=2025-01-31
+ * Requiere: Autenticación
  */
-router.get('/range', saleController.getSalesByDateRange);
+router.get('/range', verifyToken, saleController.getSalesByDateRange);
 
 /**
  * GET /api/sales/:id
  * Obtener una venta específica con sus detalles
+ * Requiere: Autenticación
  */
-router.get('/:id', validateSaleId, saleController.getSaleById);
+router.get('/:id', verifyToken, validateSaleId, saleController.getSaleById);
 
 // ========================================
 // RUTAS DE PDF
@@ -94,21 +101,24 @@ router.get('/:id', validateSaleId, saleController.getSaleById);
 /**
  * GET /api/sales/:id/pdf
  * Descargar boleta en PDF
+ * Requiere: Autenticación
  */
-router.get('/:id/pdf', validateSaleId, pdfController.generateSaleReceipt);
+router.get('/:id/pdf', verifyToken, validateSaleId, pdfController.generateSaleReceipt);
 
 /**
  * GET /api/sales/:id/pdf/view
  * Ver boleta en el navegador
+ * Requiere: Autenticación
  */
-router.get('/:id/pdf/view', validateSaleId, pdfController.viewSaleReceipt);
+router.get('/:id/pdf/view', verifyToken, validateSaleId, pdfController.viewSaleReceipt);
 
 /**
  * POST /api/sales/report/pdf
  * Generar reporte de ventas en PDF
  * Body: { start?: '2025-01-01', end?: '2025-01-31' }
+ * Requiere: Autenticación
  */
-router.post('/report/pdf', pdfController.generateSalesReport);
+router.post('/report/pdf', verifyToken, pdfController.generateSalesReport);
 
 // ========================================
 // RUTAS DE CREACIÓN
@@ -118,8 +128,9 @@ router.post('/report/pdf', pdfController.generateSalesReport);
  * POST /api/sales/preview
  * Preview de venta (calcular sin guardar)
  * Body: { items: [{id_producto, cantidad, precio_especial?}] }
+ * Requiere: Autenticación
  */
-router.post('/preview', validateCreateSale, saleController.previewSale);
+router.post('/preview', verifyToken, validateCreateSale, saleController.previewSale);
 
 /**
  * POST /api/sales
@@ -128,8 +139,9 @@ router.post('/preview', validateCreateSale, saleController.previewSale);
  *   items: [{id_producto, cantidad, precio_especial?}],
  *   observaciones?: string 
  * }
+ * Requiere: Autenticación + Rol Admin o Cajero
  */
-router.post('/', validateCreateSale, saleController.createSale);
+router.post('/', verifyToken, requireAdminOrCajero, validateCreateSale, saleController.createSale);
 
 // ========================================
 // RUTAS DE ELIMINACIÓN
@@ -138,7 +150,8 @@ router.post('/', validateCreateSale, saleController.createSale);
 /**
  * DELETE /api/sales/:id
  * Cancelar venta y restaurar stock
+ * Requiere: Autenticación + Rol Admin o Cajero
  */
-router.delete('/:id', validateSaleId, saleController.cancelSale);
+router.delete('/:id', verifyToken, requireAdminOrCajero, validateSaleId, saleController.cancelSale);
 
 module.exports = router;

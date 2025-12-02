@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas - Sistema Mercería</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/ventas.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🏪 Mercería</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="/pos.html" class="nav-item">🛒 Punto de Venta</a>
+            <a href="/productos.html" class="nav-item">📦 Productos</a>
+            <a href="/ventas.html" class="nav-item active">📋 Ventas</a>
+            <a href="/usuarios.html" class="nav-item" id="navUsuarios" style="display: none;">👥 Usuarios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="btn-menu" onclick="toggleSidebar()">☰</button>
+            <h1>📋 Historial de Ventas</h1>
+            <div class="top-bar-actions">
+                <span id="currentDate"></span>
+            </div>
+        </div>
+
+        <!-- Sales Content -->
+        <div class="container">
+            <!-- Filtros -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="filters-row">
+                        <input 
+                            type="date" 
+                            id="filterFechaInicio" 
+                            class="form-control"
+                        >
+                        <span>hasta</span>
+                        <input 
+                            type="date" 
+                            id="filterFechaFin" 
+                            class="form-control"
+                        >
+                        <button class="btn btn-primary" onclick="applyFilters()">🔍 Buscar</button>
+                        <button class="btn btn-secondary" onclick="showToday()">📅 Hoy</button>
+                        <button class="btn btn-secondary" onclick="showThisMonth()">📆 Este Mes</button>
+                        <button class="btn btn-secondary" onclick="clearFilters()">🔄 Limpiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-label">Total Ventas</div>
+                    <div class="stat-value" id="totalVentas">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Ingresos Totales</div>
+                    <div class="stat-value" id="totalIngresos">S/ 0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Promedio por Venta</div>
+                    <div class="stat-value" id="promedioVenta">S/ 0.00</div>
+                </div>
+            </div>
+
+            <!-- Tabla de Ventas -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Listado de Ventas</h3>
+                </div>
+                <div class="card-body">
+                    <div id="salesTable" class="table-container">
+                        <p class="text-muted text-center">Cargando ventas...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle de Venta -->
+    <div id="saleDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 id="saleDetailTitle">Detalle de Venta</h2>
+                <button class="btn-close" onclick="closeSaleDetailModal()">×</button>
+            </div>
+            <div class="modal-body" id="saleDetailContent">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/ventas.js"></script>
+</body>
+</html>

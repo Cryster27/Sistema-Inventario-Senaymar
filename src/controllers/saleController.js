@@ -142,8 +142,8 @@ const createSale = async (req, res, next) => {
 
     const { items, observaciones } = req.body;
 
-    // Procesar la venta
-    const sale = await SaleService.processSale({ items, observaciones });
+    // Procesar la venta con el ID del usuario autenticado
+    const sale = await SaleService.processSale({ items, observaciones }, req.user.id);
 
     res.status(201).json({
       success: true,

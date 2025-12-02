@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - Sistema Mercería</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/usuarios.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🏪 Mercería</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="/pos.html" class="nav-item">🛒 Punto de Venta</a>
+            <a href="/productos.html" class="nav-item">📦 Productos</a>
+            <a href="/ventas.html" class="nav-item">📋 Ventas</a>
+            <a href="/usuarios.html" class="nav-item active" id="navUsuarios">👥 Usuarios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="btn-menu" onclick="toggleSidebar()">☰</button>
+            <h1>👥 Gestión de Usuarios</h1>
+            <div class="top-bar-actions">
+                <button class="btn btn-primary" onclick="showCreateModal()">➕ Nuevo Usuario</button>
+            </div>
+        </div>
+
+        <!-- Users Content -->
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Listado de Usuarios</h3>
+                    <span id="totalUsers" class="badge badge-success">0 usuarios</span>
+                </div>
+                <div class="card-body">
+                    <div id="usersTable" class="table-container">
+                        <p class="text-muted text-center">Cargando usuarios...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar Usuario -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Usuario</h2>
+                <button class="btn-close" onclick="closeUserModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="username">Usuario *</label>
+                            <input type="text" id="username" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nombre_completo">Nombre Completo *</label>
+                            <input type="text" id="nombre_completo" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="rol">Rol *</label>
+                            <select id="rol" class="form-control" required>
+                                <option value="cajero">Cajero</option>
+                                <option value="vendedor">Vendedor</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="passwordGroup">
+                        <label for="password">Contraseña *</label>
+                        <input type="password" id="password" class="form-control" minlength="6">
+                        <small class="text-muted">Mínimo 6 caracteres</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-success" id="btnSave">Guardar Usuario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar Contraseña -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Cambiar Contraseña</h2>
+                <button class="btn-close" onclick="closePasswordModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="passwordUserInfo" class="mb-3"></div>
+                <form id="passwordForm">
+                    <input type="hidden" id="passwordUserId">
+                    
+                    <div class="form-group">
+                        <label for="newPassword">Nueva Contraseña *</label>
+                        <input type="password" id="newPassword" class="form-control" minlength="6" required>
+                        <small class="text-muted">Mínimo 6 caracteres</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/usuarios.js"></script>
+</body>
+</html>

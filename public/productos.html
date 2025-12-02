@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - Sistema Mercería</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/productos.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🏪 Mercería</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="/pos.html" class="nav-item">🛒 Punto de Venta</a>
+            <a href="/productos.html" class="nav-item active">📦 Productos</a>
+            <a href="/ventas.html" class="nav-item">📋 Ventas</a>
+            <a href="/usuarios.html" class="nav-item" id="navUsuarios" style="display: none;">👥 Usuarios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="btn-menu" onclick="toggleSidebar()">☰</button>
+            <h1>📦 Gestión de Productos</h1>
+            <div class="top-bar-actions">
+                <button class="btn btn-primary" onclick="showCreateModal()">➕ Nuevo Producto</button>
+            </div>
+        </div>
+
+        <!-- Products Content -->
+        <div class="container">
+            <!-- Filtros y Búsqueda -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="filters-row">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="form-control" 
+                            placeholder="🔍 Buscar por código o nombre..."
+                            style="max-width: 400px;"
+                        >
+                        <select id="filterUnidad" class="form-control" style="max-width: 200px;">
+                            <option value="">Todas las unidades</option>
+                            <option value="metro">Metro</option>
+                            <option value="centimetro">Centímetro</option>
+                            <option value="unidad">Unidad</option>
+                            <option value="docena">Docena</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                        <select id="filterStock" class="form-control" style="max-width: 200px;">
+                            <option value="">Todo el stock</option>
+                            <option value="bajo">Stock bajo</option>
+                            <option value="disponible">Con stock</option>
+                            <option value="agotado">Sin stock</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="clearFilters()">🔄 Limpiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Productos -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Listado de Productos</h3>
+                    <span id="totalProducts" class="badge badge-success">0 productos</span>
+                </div>
+                <div class="card-body">
+                    <div id="productsTable" class="table-container">
+                        <p class="text-muted text-center">Cargando productos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Producto -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Producto</h2>
+                <button class="btn-close" onclick="closeProductModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="codigo">Código *</label>
+                            <input type="text" id="codigo" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nombre">Nombre *</label>
+                            <input type="text" id="nombre" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="unidad">Unidad *</label>
+                            <select id="unidad" class="form-control" required>
+                                <option value="metro">Metro</option>
+                                <option value="centimetro">Centímetro</option>
+                                <option value="unidad">Unidad</option>
+                                <option value="docena">Docena</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock">Stock Inicial *</label>
+                            <input type="number" id="stock" class="form-control" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="precio">Precio *</label>
+                            <input type="number" id="precio" class="form-control" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea id="descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-success" id="btnSave">Guardar Producto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Ajustar Stock -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Ajustar Stock</h2>
+                <button class="btn-close" onclick="closeStockModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="stockProductInfo" class="mb-3"></div>
+                <form id="stockForm">
+                    <input type="hidden" id="stockProductId">
+                    
+                    <div class="form-group">
+                        <label for="stockCantidad">Cantidad (+ para agregar, - para restar)</label>
+                        <input type="number" id="stockCantidad" class="form-control" step="0.01" required>
+                        <small class="text-muted">Ejemplo: +10 para agregar, -5 para restar</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stockMotivo">Motivo</label>
+                        <input type="text" id="stockMotivo" class="form-control" placeholder="Ej: Reabastecimiento, Ajuste, etc.">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeStockModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Ajustar Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/productos.js"></script>
+</body>
+</html>

@@ -14,9 +14,10 @@ class SaleService {
   /**
    * Procesar una venta completa (con transacción)
    * @param {Object} saleData - Datos de la venta
+   * @param {number} userId - ID del usuario que registra la venta
    * @returns {Object} - Venta procesada
    */
-  static async processSale(saleData) {
+  static async processSale(saleData, userId = null) {
     const { items, observaciones } = saleData;
 
     // Validar que hay items

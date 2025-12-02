@@ -6,9 +6,12 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 const errorHandler = require('./middlewares/errorHandler');
 
 // Importar rutas
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const saleRoutes = require('./routes/saleRoutes');
 
@@ -18,11 +21,16 @@ const app = express();
 // MIDDLEWARES GLOBALES
 // ========================================
 
-// Seguridad
-app.use(helmet());
+// Seguridad - Configurar CSP para permitir recursos locales
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 
 // CORS - Permitir peticiones desde otros dominios
 app.use(cors());
+
+// Servir archivos estáticos
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Parser de JSON
 app.use(express.json());
@@ -47,6 +55,8 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     status: 'OK',
     endpoints: {
+      auth: '/api/auth',
+      users: '/api/users',
       products: '/api/products',
       sales: '/api/sales'
     }
@@ -54,6 +64,8 @@ app.get('/', (req, res) => {
 });
 
 // Rutas de la API
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/sales', saleRoutes);
 
