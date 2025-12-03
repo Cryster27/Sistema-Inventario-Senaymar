@@ -72,7 +72,15 @@ const calculateIGV = (subtotal, porcentajeIGV = 18) => {
  * @returns {string} - Cantidad formateada
  */
 const formatCurrency = (amount, currency = 'S/') => {
-  return `${currency} ${amount.toFixed(2)}`;
+  // Convertir a número y manejar casos especiales
+  const numAmount = parseFloat(amount);
+  
+  // Si no es un número válido, devolver 0.00
+  if (isNaN(numAmount)) {
+    return `${currency} 0.00`;
+  }
+  
+  return `${currency} ${numAmount.toFixed(2)}`;
 };
 
 /**

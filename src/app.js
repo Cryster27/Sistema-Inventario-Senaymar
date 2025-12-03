@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 // Ruta de prueba
 app.get('/', (req, res) => {
   res.json({
-    message: '🏪 Sistema de Inventario y Ventas - Mercería',
+    message: '🏪 Sistema de Inventario y Ventas - Semaymar E.I.R.L.',
     version: '1.0.0',
     status: 'OK',
     endpoints: {

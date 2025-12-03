@@ -30,7 +30,11 @@ const UNIDADES = [
 
 // Formatear moneda
 function formatCurrency(amount) {
-  return `S/ ${parseFloat(amount).toFixed(2)}`;
+  const numAmount = parseFloat(amount);
+  if (isNaN(numAmount)) {
+    return 'S/ 0.00';
+  }
+  return `S/ ${numAmount.toFixed(2)}`;
 }
 
 // Formatear fecha

@@ -242,33 +242,38 @@ function showModal(title, content) {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 9999;
+      backdrop-filter: blur(2px);
     `;
     document.body.appendChild(modal);
   }
   
   modal.innerHTML = `
-    <div style="background: white; border-radius: 12px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div class="modal-content">
+      <div class="modal-header">
         <h2>${title}</h2>
-        <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+        <button onclick="closeModal()">×</button>
       </div>
-      <div>${content}</div>
+      <div style="padding: 24px; overflow-y: auto; flex: 1;">${content}</div>
     </div>
   `;
   
   modal.style.display = 'flex';
+  modal.style.animation = 'fadeIn 0.3s ease-out';
 }
 
 // Cerrar modal
 function closeModal() {
   const modal = document.getElementById('customModal');
   if (modal) {
-    modal.style.display = 'none';
+    modal.style.animation = 'fadeOut 0.2s ease-out';
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 200);
   }
 }
 

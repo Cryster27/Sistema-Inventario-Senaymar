@@ -27,7 +27,17 @@ class Sale {
   static async findById(id) {
     const sql = 'SELECT * FROM sales WHERE id = ?';
     const results = await query(sql, [id]);
-    return results[0] || null;
+    
+    if (results.length === 0) {
+      return null;
+    }
+    
+    // Asegurar que el total sea un número
+    const sale = results[0];
+    return {
+      ...sale,
+      total: parseFloat(sale.total)
+    };
   }
 
   /**

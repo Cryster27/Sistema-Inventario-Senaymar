@@ -153,8 +153,37 @@ const SaleAPI = {
   
   // Descargar PDF
   downloadPDF: async (id) => {
-    const token = getToken();
-    window.open(`${API_URL}/sales/${id}/pdf?token=${token}`, '_blank');
+    try {
+      const token = getToken();
+      const url = `${API_URL}/sales/${id}/pdf`;
+      
+      // Crear un enlace temporal y hacer clic
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `boleta_${id}.pdf`);
+      
+      // Agregar headers de autenticación
+      fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(error => {
+        console.error('Error descargando PDF:', error);
+        throw error;
+      });
+      
+    } catch (error) {
+      console.error('Error en downloadPDF:', error);
+      throw error;
+    }
   },
   
   // Productos más vendidos

@@ -89,8 +89,97 @@
                     <button class="btn btn-secondary btn-block" onclick="previewSale()" id="btnPreview" disabled>
                         👁️ Vista Previa
                     </button>
-                    <button class="btn btn-success btn-block" onclick="completeSale()" id="btnComplete" disabled>
+                    <button class="btn btn-success btn-block" onclick="showConfirmSaleModal()" id="btnComplete" disabled>
                         ✅ Completar Venta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Venta -->
+    <div id="confirmSaleModal" class="modal">
+        <div class="modal-content confirm-sale-modal">
+            <div class="modal-header">
+                <h2>🧾 Confirmar Venta</h2>
+                <button class="btn-close" onclick="closeConfirmSaleModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Información del Cliente -->
+                <div class="customer-section">
+                    <h3>Datos del Cliente</h3>
+                    <div class="customer-form">
+                        <div class="form-group">
+                            <label for="clientDoc">DNI / RUC</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input 
+                                    type="text" 
+                                    id="clientDoc" 
+                                    class="form-control" 
+                                    placeholder="Ingrese DNI (8) o RUC (11)"
+                                    maxlength="11"
+                                    pattern="[0-9]*"
+                                    inputmode="numeric"
+                                >
+                                <button class="btn btn-secondary" onclick="searchClient()" id="btnSearchClient" type="button">
+                                    🔍 Buscar
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                💡 Presione Enter o espere después de escribir para buscar automáticamente<br>
+                                ⚠️ Si la búsqueda falla, puede continuar como "Usuario Final"
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientName">Nombre del Cliente</label>
+                            <input 
+                                type="text" 
+                                id="clientName" 
+                                class="form-control" 
+                                placeholder="Usuario Final"
+                                readonly
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen de la Venta -->
+                <div class="sale-summary-section">
+                    <h3>Resumen de la Venta</h3>
+                    <div id="confirmSaleItems" class="confirm-items-list">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                    
+                    <div class="confirm-totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="confirmSubtotal">S/ 0.00</span>
+                        </div>
+                        <div class="total-row total-main">
+                            <span><strong>TOTAL:</strong></span>
+                            <span id="confirmTotal"><strong>S/ 0.00</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="form-group">
+                    <label for="saleObservations">Observaciones (Opcional)</label>
+                    <textarea 
+                        id="saleObservations" 
+                        class="form-control" 
+                        rows="2" 
+                        placeholder="Agregar nota adicional..."
+                    ></textarea>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="confirm-actions">
+                    <button class="btn btn-secondary btn-lg" onclick="closeConfirmSaleModal()">
+                        ❌ Cancelar
+                    </button>
+                    <button class="btn btn-success btn-lg" onclick="finalizeSale()" id="btnFinalizeSale">
+                        🧾 Finalizar Venta
                     </button>
                 </div>
             </div>
@@ -100,6 +189,7 @@
     <script src="/js/config.js"></script>
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
+    <script src="/js/clientAPI.js"></script>
     <script src="/js/pos.js"></script>
 </body>
 </html>

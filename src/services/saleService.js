@@ -33,15 +33,23 @@ class SaleService {
       throw error;
     }
 
-    // Calcular total de la venta
-    const total = calculateTotal(items);
+    // Calcular total de la venta - CORREGIDO
+    let total = 0;
+    for (const item of items) {
+      const product = await Product.findById(item.id_producto);
+      const precioUnitario = item.precio_especial || product.precio;
+      const subtotal = calculateSubtotal(item.cantidad, precioUnitario);
+      total += subtotal;
+    }
+    
+    console.log('Total calculado:', total); // Debug
 
     // Procesar venta en transacción
     const result = await transaction(async (connection) => {
       // 1. Crear la venta
       const saleResult = await connection.execute(
-        'INSERT INTO sales (total, observaciones) VALUES (?, ?)',
-        [total, observaciones || null]
+        'INSERT INTO sales (total, observaciones, id_usuario) VALUES (?, ?, ?)',
+        [total, observaciones || null, userId]
       );
 
       const saleId = saleResult[0].insertId;

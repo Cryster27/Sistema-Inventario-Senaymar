@@ -22,7 +22,16 @@ class SaleDetail {
       WHERE sd.id_sale = ?
       ORDER BY sd.id
     `;
-    return await query(sql, [idSale]);
+    const results = await query(sql, [idSale]);
+    
+    // Asegurar que los valores numéricos sean números
+    return results.map(item => ({
+      ...item,
+      cantidad: parseFloat(item.cantidad),
+      precio_unitario: parseFloat(item.precio_unitario),
+      subtotal: parseFloat(item.subtotal),
+      precio_especial: Boolean(item.precio_especial)
+    }));
   }
 
   /**

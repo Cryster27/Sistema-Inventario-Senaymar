@@ -113,14 +113,23 @@ function applyFilters() {
     filtered = filtered.filter(p => p.unidad === unidad);
   }
   
-  // Filtrar por stock
+  // Filtrar por stock - CORREGIDO
   if (stock === 'bajo') {
-    filtered = filtered.filter(p => p.stock > 0 && p.stock <= 10);
+    // Stock bajo: mayor a 0 pero menor o igual a 10
+    filtered = filtered.filter(p => {
+      const stockNum = parseFloat(p.stock);
+      return stockNum > 0 && stockNum <= 10;
+    });
   } else if (stock === 'disponible') {
-    filtered = filtered.filter(p => p.stock > 0);
+    // Con stock: mayor a 0
+    filtered = filtered.filter(p => parseFloat(p.stock) > 0);
   } else if (stock === 'agotado') {
-    filtered = filtered.filter(p => p.stock === 0);
+    // Sin stock: igual a 0
+    filtered = filtered.filter(p => parseFloat(p.stock) === 0);
   }
+  
+  console.log('Filtros aplicados:', { search, unidad, stock });
+  console.log('Productos filtrados:', filtered.length);
   
   renderProducts(filtered);
 }

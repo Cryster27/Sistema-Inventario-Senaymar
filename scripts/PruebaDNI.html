@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Consulta DNI / RUC</title>
+<style>
+    body { font-family: Arial; padding: 20px; }
+    #contenedor {
+        width: 320px; padding: 20px;
+        border: 1px solid #ccc; border-radius: 10px;
+        box-shadow: 0 0 10px #bbb;
+    }
+    input, button {
+        width: 100%; padding: 10px; margin-top: 10px;
+    }
+    #resultado { margin-top: 15px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<div id="contenedor">
+    <h3>Buscar DNI / RUC</h3>
+    <input id="numero" type="text" placeholder="Ingresa DNI (8) o RUC (11)">
+    <button onclick="consultar()">Consultar</button>
+    <div id="resultado"></div>
+</div>
+
+<script>
+// ---- CAMBIA AQUÍ TU TOKEN ----
+const TOKEN = "7301e12bd793f4161f6062313fa5c4178df93a93121129887eeb3f39c92878f2";
+
+async function consultar() {
+    const numero = document.getElementById("numero").value.trim();
+    const salida = document.getElementById("resultado");
+    salida.textContent = "Consultando...";
+
+    if (!numero) {
+        salida.textContent = "Ingrese un número.";
+        return;
+    }
+
+    let url = "";
+
+    if (numero.length === 8) {
+        url = "https://apiperu.dev/api/dni/" + numero;
+    } else if (numero.length === 11) {
+        url = "https://apiperu.dev/api/ruc/" + numero;
+    } else {
+        salida.textContent = "Número inválido.";
+        return;
+    }
+
+    try {
+        const res = await fetch(url, {
+            headers: {
+                "Authorization": `Bearer ${TOKEN}`
+            }
+        });
+
+        const json = await res.json();
+
+        if (!json.success) {
+            salida.textContent = "No encontrado o token inválido.";
+            return;
+        }
+
+        salida.textContent = JSON.stringify(json.data, null, 2);
+    }
+    catch (error) {
+        salida.textContent = "Error de conexión con el servidor.";
+        console.log(error);
+    }
+}
+</script>
+
+</body>
+</html>

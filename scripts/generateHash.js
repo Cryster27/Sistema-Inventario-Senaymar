@@ -15,8 +15,8 @@ async function generateHash(password) {
 async function main() {
   console.log('Generando hashes de contraseñas...\n');
   
-  await generateHash('admin123');
-  await generateHash('cajero123');
+  //await generateHash('admin123');
+  //await generateHash('cajero123');
   
   console.log('\nCopia estos hashes y actualiza tu base de datos.');
 }

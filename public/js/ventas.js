@@ -24,7 +24,7 @@ async function loadSales() {
 function renderSales(sales) {
   const container = document.getElementById('salesTable');
   
-  if (sales.length === 0) {
+  if (sales.length === 0) { 
     container.innerHTML = '<p class="text-muted text-center">No se encontraron ventas</p>';
     return;
   }
@@ -177,7 +177,13 @@ async function viewSaleDetail(id) {
 }
 
 function closeSaleDetailModal() {
-  document.getElementById('saleDetailModal').classList.remove('active');
+  const modal = document.getElementById('saleDetailModal');
+  modal.classList.add('closing');
+  
+  setTimeout(() => {
+    modal.classList.remove('active');
+    modal.classList.remove('closing');
+  }, 200);
 }
 
 function downloadPDF(id) {

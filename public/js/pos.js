@@ -360,49 +360,243 @@ async function previewSale() {
   }
 }
 
-// Completar venta
-async function completeSale() {
+// Mostrar modal de confirmación de venta
+function showConfirmSaleModal() {
   if (cart.length === 0) return;
   
-  if (!confirm('¿Confirmar la venta?')) return;
+  // Llenar información del cliente por defecto
+  document.getElementById('clientDoc').value = '';
+  document.getElementById('clientName').value = 'Usuario Final';
+  document.getElementById('saleObservations').value = '';
   
-  const btnComplete = document.getElementById('btnComplete');
-  btnComplete.disabled = true;
-  btnComplete.textContent = 'Procesando...';
+  // Llenar items de la venta
+  const itemsContainer = document.getElementById('confirmSaleItems');
+  const itemsHtml = cart.map(item => `
+    <div class="confirm-item">
+      <div class="confirm-item-info">
+        <div class="confirm-item-name">${item.nombre}</div>
+        <div class="confirm-item-details">
+          ${item.cantidad} ${item.unidad} × ${formatCurrency(item.precio_unitario)}
+          ${item.precio_especial ? '<span style="color: #f59e0b;">★ Precio especial</span>' : ''}
+        </div>
+      </div>
+      <div class="confirm-item-price">
+        <div class="confirm-item-subtotal">${formatCurrency(item.cantidad * item.precio_unitario)}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  itemsContainer.innerHTML = itemsHtml;
+  
+  // Calcular totales
+  const total = cart.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
+  document.getElementById('confirmSubtotal').textContent = formatCurrency(total);
+  document.getElementById('confirmTotal').textContent = formatCurrency(total);
+  
+  // Mostrar modal
+  document.getElementById('confirmSaleModal').classList.add('active');
+}
+
+// Cerrar modal de confirmación
+function closeConfirmSaleModal() {
+  const modal = document.getElementById('confirmSaleModal');
+  modal.classList.add('closing');
+  
+  setTimeout(() => {
+    modal.classList.remove('active');
+    modal.classList.remove('closing');
+  }, 200);
+}
+
+// Buscar cliente usando API real
+async function searchClient() {
+  const docInput = document.getElementById('clientDoc');
+  const nameInput = document.getElementById('clientName');
+  const btnSearch = document.getElementById('btnSearchClient');
+  
+  const docNumber = docInput.value.trim();
+  
+  if (!docNumber) {
+    showNotification('Ingrese un DNI o RUC', 'error');
+    return;
+  }
+  
+  // Validar que solo sean números
+  if (!/^\d+$/.test(docNumber)) {
+    showNotification('El documento debe contener solo números', 'error');
+    return;
+  }
+  
+  // Validar longitud
+  if (docNumber.length !== 8 && docNumber.length !== 11) {
+    showNotification('DNI debe tener 8 dígitos o RUC 11 dígitos', 'error');
+    return;
+  }
+  
+  btnSearch.disabled = true;
+  btnSearch.textContent = '🔍 Buscando...';
+  nameInput.value = 'Consultando...';
   
   try {
+    // Consultar documento usando la API
+    const result = await consultarDocumento(docNumber);
+    
+    if (result.success) {
+      nameInput.value = result.nombreCompleto;
+      showNotification(`✅ Cliente encontrado: ${result.nombreCompleto}`, 'success');
+      
+      // Si es RUC, mostrar información adicional
+      if (docNumber.length === 11 && result.direccion) {
+        console.log('📍 Dirección:', result.direccion);
+        console.log('📊 Estado:', result.estado);
+        console.log('📋 Condición:', result.condicion);
+      }
+    } else {
+      nameInput.value = 'Usuario Final';
+      showNotification(`⚠️ ${result.error || 'No se encontró el documento'}`, 'error');
+    }
+    
+  } catch (error) {
+    console.error('Error buscando cliente:', error);
+    nameInput.value = 'Usuario Final';
+    showNotification('❌ Error al buscar cliente. Intente nuevamente.', 'error');
+  } finally {
+    btnSearch.disabled = false;
+    btnSearch.textContent = '🔍 Buscar';
+  }
+}
+
+// Finalizar venta con toda la información
+async function finalizeSale() {
+  if (cart.length === 0) return;
+  
+  const btnFinalize = document.getElementById('btnFinalizeSale');
+  btnFinalize.disabled = true;
+  btnFinalize.textContent = '⏳ Procesando...';
+  
+  try {
+    // Obtener datos del cliente
+    const clientDoc = document.getElementById('clientDoc').value.trim();
+    const clientName = document.getElementById('clientName').value.trim();
+    const observations = document.getElementById('saleObservations').value.trim();
+    
+    // Preparar items
     const items = cart.map(item => ({
       id_producto: item.id_producto,
       cantidad: item.cantidad,
       precio_especial: item.precio_especial ? item.precio_unitario : undefined
     }));
     
-    const response = await SaleAPI.create({ items });
+    // Preparar observaciones completas
+    let finalObservations = '';
+    if (clientDoc && clientName !== 'Usuario Final') {
+      finalObservations += `Cliente: ${clientName} (${clientDoc})`;
+    } else {
+      finalObservations += 'Cliente: Usuario Final';
+    }
+    if (observations) {
+      finalObservations += ` | ${observations}`;
+    }
+    
+    // Crear la venta
+    const response = await SaleAPI.create({ 
+      items, 
+      observaciones: finalObservations 
+    });
     const sale = response.data;
     
-    showNotification('¡Venta realizada con éxito!', 'success');
+    showNotification('✅ Venta registrada exitosamente', 'success');
     
-    // Preguntar si quiere descargar PDF
-    if (confirm('Venta registrada correctamente. ¿Descargar boleta en PDF?')) {
+    // Cerrar modal de confirmación
+    closeConfirmSaleModal();
+    
+    // Generar y descargar PDF automáticamente
+    setTimeout(() => {
       SaleAPI.downloadPDF(sale.id);
-    }
+      showNotification('📄 Descargando comprobante...', 'success');
+      
+      // Intentar imprimir (abrirá el diálogo de impresión del navegador)
+      setTimeout(() => {
+        printReceipt(sale.id);
+      }, 1000);
+    }, 500);
     
     // Limpiar carrito
     cart = [];
     updateCart();
     
-  } catch (error) {
-    console.error('Error completando venta:', error);
+    // Recargar productos disponibles
+    loadAvailableProducts();
     
-    if (error.message.includes('Stock insuficiente')) {
-      showNotification('Stock insuficiente para algunos productos', 'error');
+  } catch (error) {
+    console.error('Error finalizando venta:', error);
+    
+    if (error.message && error.message.includes('Stock insuficiente')) {
+      showNotification('❌ Stock insuficiente para algunos productos', 'error');
     } else {
-      showNotification('Error al procesar la venta', 'error');
+      showNotification('❌ Error al procesar la venta', 'error');
     }
   } finally {
-    btnComplete.disabled = false;
-    btnComplete.textContent = '✅ Completar Venta';
+    btnFinalize.disabled = false;
+    btnFinalize.textContent = '🧾 Finalizar Venta';
   }
+}
+
+// Función para imprimir (abre ventana de vista previa)
+async function printReceipt(saleId) {
+  try {
+    const token = getToken();
+    
+    showNotification('🖨️ Generando vista previa para impresión...', 'info');
+    
+    // Obtener el PDF como blob
+    const response = await fetch(`${API_URL}/sales/${saleId}/pdf`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener el PDF');
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    
+    // Abrir en nueva ventana para vista previa e impresión
+    const printWindow = window.open(url, '_blank', 'width=800,height=600');
+    
+    if (!printWindow) {
+      showNotification('⚠️ Por favor habilite ventanas emergentes', 'error');
+      // Si no se puede abrir ventana, descargar directamente
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `boleta_${saleId}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      return;
+    }
+    
+    // Esperar a que cargue y luego mostrar diálogo de impresión
+    printWindow.addEventListener('load', () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 500);
+    });
+    
+    showNotification('✅ Ventana de impresión abierta', 'success');
+    
+  } catch (error) {
+    console.error('Error abriendo vista previa:', error);
+    showNotification('❌ Error al abrir vista previa. El PDF se descargó.', 'error');
+  }
+}
+
+// Completar venta (mantener función antigua por compatibilidad, pero ahora abre el modal)
+async function completeSale() {
+  showConfirmSaleModal();
 }
 
 // Inicializar POS
@@ -414,4 +608,27 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Enfocar búsqueda
   searchInput.focus();
+  
+  // Agregar listener para Enter en campo de DNI/RUC
+  const clientDocInput = document.getElementById('clientDoc');
+  if (clientDocInput) {
+    clientDocInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchClient();
+      }
+    });
+    
+    // Auto-buscar cuando complete 8 u 11 dígitos
+    clientDocInput.addEventListener('input', (e) => {
+      const value = e.target.value.trim();
+      if (value.length === 8 || value.length === 11) {
+        // Esperar un poco por si sigue escribiendo
+        clearTimeout(clientDocInput.autoSearchTimeout);
+        clientDocInput.autoSearchTimeout = setTimeout(() => {
+          searchClient();
+        }, 500);
+      }
+    });
+  }
 });
