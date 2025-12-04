@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API DNI/RUC - Corregido</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .test-section h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 14px 28px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .example-btn {
+            padding: 12px 20px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .example-btn:hover {
+            background: #059669;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .result.success {
+            background: #ecfdf5;
+            border-color: #10b981;
+        }
+
+        .result.error {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+
+        .result h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .result-data {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .console-log {
+            margin-top: 30px;
+            padding: 25px;
+            background: #1f2937;
+            color: #f3f4f6;
+            border-radius: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .console-log h3 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+        }
+
+        .console-log div {
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            border-left: 3px solid transparent;
+        }
+
+        .console-log .info {
+            border-left-color: #3b82f6;
+        }
+
+        .console-log .success {
+            border-left-color: #10b981;
+        }
+
+        .console-log .error {
+            border-left-color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API DNI/RUC</h1>
+        <p class="subtitle">Versión corregida - La API devuelve {success, data}</p>
+
+        <div class="test-section">
+            <h2>🔍 Búsqueda de Documento</h2>
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="numero" 
+                    placeholder="Ingrese DNI (8) o RUC (11)"
+                    maxlength="11"
+                >
+                <button onclick="consultar()" id="btnBuscar">🔍 Buscar</button>
+            </div>
+
+            <div class="examples">
+                <button class="example-btn" onclick="probarDNI()">
+                    📋 DNI: 75276243
+                </button>
+                <button class="example-btn" onclick="probarRUC()">
+                    🏢 RUC: 10752762444
+                </button>
+            </div>
+
+            <div id="resultado"></div>
+        </div>
+
+        <div class="console-log" id="consoleLog">
+            <h3>📋 Console Log</h3>
+            <div class="info">Esperando búsqueda...</div>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN = "7301e12bd793f4161f6062313fa5c4178df93a93121129887eeb3f39c92878f2";
+        const consoleLogDiv = document.getElementById('consoleLog');
+
+        // Capturar logs
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog('info', args.join(' '));
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog('error', args.join(' '));
+        };
+
+        function addLog(type, message) {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            consoleLogDiv.appendChild(div);
+            consoleLogDiv.scrollTop = consoleLogDiv.scrollHeight;
+        }
+
+        async function consultar() {
+            const numero = document.getElementById("numero").value.trim();
+            const salida = document.getElementById("resultado");
+            const btnBuscar = document.getElementById("btnBuscar");
+            
+            salida.innerHTML = '<div style="padding: 20px; text-align: center;">Consultando...</div>';
+
+            if (!numero) {
+                mostrarResultado('error', 'Ingrese un número');
+                return;
+            }
+
+            if (!/^\d+$/.test(numero)) {
+                mostrarResultado('error', 'Solo números permitidos');
+                return;
+            }
+
+            let url = "";
+
+            if (numero.length === 8) {
+                url = "https://apiperu.dev/api/dni/" + numero;
+            } else if (numero.length === 11) {
+                url = "https://apiperu.dev/api/ruc/" + numero;
+            } else {
+                mostrarResultado('error', 'Número inválido. DNI=8 dígitos, RUC=11 dígitos');
+                return;
+            }
+
+            btnBuscar.disabled = true;
+            btnBuscar.textContent = '⏳ Buscando...';
+
+            console.log('========================================');
+            console.log('NUEVA BÚSQUEDA');
+            console.log('========================================');
+            console.log('Documento:', numero);
+            console.log('Tipo:', numero.length === 8 ? 'DNI' : 'RUC');
+            console.log('URL:', url);
+
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        "Authorization": `Bearer ${TOKEN}`,
+                        "Accept": "application/json"
+                    }
+                });
+
+                console.log('Status HTTP:', res.status);
+                console.log('OK?:', res.ok);
+
+                if (!res.ok) {
+                    throw new Error(`Error HTTP: ${res.status}`);
+                }
+
+                const json = await res.json();
+                console.log('========================================');
+                console.log('RESPUESTA COMPLETA:');
+                console.log(JSON.stringify(json, null, 2));
+                console.log('========================================');
+                console.log('Success?:', json.success);
+                console.log('Tiene data?:', !!json.data);
+
+                if (!json.success) {
+                    mostrarResultado('error', 'No encontrado o token inválido');
+                    return;
+                }
+
+                // Extraer data
+                const data = json.data;
+                console.log('Data extraída:', data);
+
+                let nombreCompleto;
+                let detalles = '';
+
+                if (numero.length === 8) {
+                    // DNI
+                    nombreCompleto = data.nombre_completo;
+                    detalles = `
+DNI: ${data.numero}
+Nombre Completo: ${data.nombre_completo}
+Nombres: ${data.nombres}
+Apellido Paterno: ${data.apellido_paterno}
+Apellido Materno: ${data.apellido_materno}
+Código Verificación: ${data.codigo_verificacion}`;
+                } else {
+                    // RUC
+                    nombreCompleto = data.nombre_o_razon_social;
+                    detalles = `
+RUC: ${data.ruc}
+Razón Social: ${data.nombre_o_razon_social}
+Estado: ${data.estado}
+Condición: ${data.condicion}
+Dirección: ${data.direccion_completa || data.direccion || 'N/A'}`;
+                }
+
+                console.log('✅ ENCONTRADO:', nombreCompleto);
+                mostrarResultado('success', `¡${numero.length === 8 ? 'DNI' : 'RUC'} encontrado!`, detalles);
+            }
+            catch (error) {
+                console.error('❌ ERROR:', error.message);
+                mostrarResultado('error', `Error: ${error.message}`);
+            }
+            finally {
+                btnBuscar.disabled = false;
+                btnBuscar.textContent = '🔍 Buscar';
+            }
+        }
+
+        function mostrarResultado(tipo, mensaje, datos = '') {
+            const resultado = document.getElementById('resultado');
+            
+            let html = `<div class="result ${tipo}">`;
+            html += `<h3>${tipo === 'success' ? '✅' : '❌'} ${mensaje}</h3>`;
+            
+            if (datos) {
+                html += `<div class="result-data">${datos}</div>`;
+            }
+            
+            html += `</div>`;
+            resultado.innerHTML = html;
+        }
+
+        function probarDNI() {
+            document.getElementById('numero').value = '75276243';
+            consultar();
+        }
+
+        function probarRUC() {
+            document.getElementById('numero').value = '10752762444';
+            consultar();
+        }
+
+        // Enter para buscar
+        document.getElementById('numero').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') consultar();
+        });
+
+        // Solo números
+        document.getElementById('numero').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+
+        console.log('✅ Sistema cargado');
+        console.log('💡 Usa los botones de ejemplo');
+    </script>
+</body>
+</html>

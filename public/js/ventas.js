@@ -95,11 +95,30 @@ function applyFilters() {
   updateStats(filteredSales);
 }
 
+
 function showToday() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('filterFechaInicio').value = today;
-  document.getElementById('filterFechaFin').value = today;
-  applyFilters();
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+  
+  // Obtener fecha local correctamente
+  const start = new Date(today);
+  start.setHours(0, 0, 0, 0);
+  
+  const end = new Date(today);
+  end.setHours(23, 59, 59, 999);
+  
+  // Establecer valores en los inputs
+  document.getElementById('filterFechaInicio').value = todayStr;
+  document.getElementById('filterFechaFin').value = todayStr;
+  
+  // Filtrar las ventas
+  filteredSales = allSales.filter(s => {
+    const saleDate = new Date(s.fecha);
+    return saleDate >= start && saleDate <= end;
+  });
+  
+  renderSales(filteredSales);
+  updateStats(filteredSales);
 }
 
 function showThisMonth() {
