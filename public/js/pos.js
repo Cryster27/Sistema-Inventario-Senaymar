@@ -1,11 +1,13 @@
 /**
  * pos.js
- * Lógica del Punto de Venta
+ * Lógica del Punto de Venta - VISOR PDF CORREGIDO
  */
 
 // Carrito de compras
 let cart = [];
 let allProducts = [];
+
+// [... Todo el código anterior se mantiene igual hasta finalizeSale ...]
 
 // Cargar productos disponibles
 async function loadAvailableProducts() {
@@ -13,7 +15,7 @@ async function loadAvailableProducts() {
     const response = await ProductAPI.getAll();
     allProducts = response.data
       .filter(p => p.activo && p.stock > 0)
-      .sort((a, b) => a.nombre.localeCompare(b.nombre)); // Orden alfabético
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
     
     renderProductsGrid();
   } catch (error) {
@@ -66,14 +68,12 @@ searchInput.addEventListener('input', (e) => {
   }, 300);
 });
 
-// Cerrar resultados al hacer clic fuera
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.search-section')) {
     searchResults.classList.remove('active');
   }
 });
 
-// Buscar productos
 async function searchProducts(query) {
   try {
     const response = await ProductAPI.search(query);
@@ -104,29 +104,23 @@ async function searchProducts(query) {
   }
 }
 
-// Agregar producto al carrito
 async function addToCart(productId, productCode) {
   try {
-    // Cerrar resultados de búsqueda
     searchResults.classList.remove('active');
     searchInput.value = '';
     
-    // Obtener producto
     const response = await ProductAPI.getById(productId);
     const product = response.data;
     
-    // Verificar si ya está en el carrito
     const existingItem = cart.find(item => item.id_producto === productId);
     
     if (existingItem) {
-      // Incrementar cantidad
       existingItem.cantidad++;
       updateCart();
       showNotification(`${product.nombre} agregado (${existingItem.cantidad})`, 'success');
       return;
     }
     
-    // Agregar nuevo item
     cart.push({
       id_producto: product.id,
       codigo: product.codigo,
@@ -139,10 +133,7 @@ async function addToCart(productId, productCode) {
     });
     
     updateCart();
-    
-    // Actualizar la lista de productos disponibles
     loadAvailableProducts();
-    
     showNotification(`${product.nombre} agregado al carrito`, 'success');
     
   } catch (error) {
@@ -151,7 +142,6 @@ async function addToCart(productId, productCode) {
   }
 }
 
-// Actualizar carrito
 function updateCart() {
   const cartItemsContainer = document.getElementById('cartItems');
   const btnPreview = document.getElementById('btnPreview');
@@ -212,7 +202,6 @@ function updateCart() {
   updateTotals();
 }
 
-// Actualizar totales
 function updateTotals() {
   const subtotal = cart.reduce((sum, item) => {
     return sum + (parseFloat(item.cantidad) * parseFloat(item.precio_unitario));
@@ -220,12 +209,8 @@ function updateTotals() {
   
   document.getElementById('subtotal').textContent = formatCurrency(subtotal);
   document.getElementById('total').textContent = formatCurrency(subtotal);
-  
-  console.log('Carrito actualizado:', cart);
-  console.log('Total calculado:', subtotal);
 }
 
-// Aumentar cantidad
 function increaseQuantity(index) {
   const item = cart[index];
   const increment = (item.unidad === 'unidad' || item.unidad === 'docena') ? 1 : 0.5;
@@ -233,7 +218,6 @@ function increaseQuantity(index) {
   updateCart();
 }
 
-// Disminuir cantidad
 function decreaseQuantity(index) {
   const item = cart[index];
   const decrement = (item.unidad === 'unidad' || item.unidad === 'docena') ? 1 : 0.5;
@@ -249,7 +233,6 @@ function decreaseQuantity(index) {
   updateCart();
 }
 
-// Actualizar cantidad manualmente
 function updateQuantity(index, value) {
   const cantidad = parseFloat(value);
   
@@ -263,7 +246,6 @@ function updateQuantity(index, value) {
   updateCart();
 }
 
-// Cambiar precio (precio especial)
 function changePrice(index) {
   const item = cart[index];
   const newPrice = prompt(
@@ -286,14 +268,12 @@ function changePrice(index) {
   showNotification('Precio actualizado', 'success');
 }
 
-// Eliminar del carrito
 function removeFromCart(index) {
   cart.splice(index, 1);
   updateCart();
   showNotification('Producto eliminado', 'success');
 }
 
-// Limpiar carrito
 function clearCart() {
   if (cart.length === 0) return;
   
@@ -304,7 +284,6 @@ function clearCart() {
   }
 }
 
-// Vista previa de la venta
 async function previewSale() {
   if (cart.length === 0) return;
   
@@ -360,16 +339,13 @@ async function previewSale() {
   }
 }
 
-// Mostrar modal de confirmación de venta
 function showConfirmSaleModal() {
   if (cart.length === 0) return;
   
-  // Llenar información del cliente por defecto
   document.getElementById('clientDoc').value = '';
   document.getElementById('clientName').value = 'Usuario Final';
   document.getElementById('saleObservations').value = '';
   
-  // Llenar items de la venta
   const itemsContainer = document.getElementById('confirmSaleItems');
   const itemsHtml = cart.map(item => `
     <div class="confirm-item">
@@ -388,16 +364,13 @@ function showConfirmSaleModal() {
   
   itemsContainer.innerHTML = itemsHtml;
   
-  // Calcular totales
   const total = cart.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
   document.getElementById('confirmSubtotal').textContent = formatCurrency(total);
   document.getElementById('confirmTotal').textContent = formatCurrency(total);
   
-  // Mostrar modal
   document.getElementById('confirmSaleModal').classList.add('active');
 }
 
-// Cerrar modal de confirmación
 function closeConfirmSaleModal() {
   const modal = document.getElementById('confirmSaleModal');
   modal.classList.add('closing');
@@ -408,7 +381,6 @@ function closeConfirmSaleModal() {
   }, 200);
 }
 
-// Buscar cliente usando API real
 async function searchClient() {
   const docInput = document.getElementById('clientDoc');
   const nameInput = document.getElementById('clientName');
@@ -421,13 +393,11 @@ async function searchClient() {
     return;
   }
   
-  // Validar que solo sean números
   if (!/^\d+$/.test(docNumber)) {
     showNotification('El documento debe contener solo números', 'error');
     return;
   }
   
-  // Validar longitud
   if (docNumber.length !== 8 && docNumber.length !== 11) {
     showNotification('DNI debe tener 8 dígitos o RUC 11 dígitos', 'error');
     return;
@@ -438,14 +408,12 @@ async function searchClient() {
   nameInput.value = 'Consultando...';
   
   try {
-    // Consultar documento usando la API
     const result = await consultarDocumento(docNumber);
     
     if (result.success) {
       nameInput.value = result.nombreCompleto;
       showNotification(`✅ Cliente encontrado: ${result.nombreCompleto}`, 'success');
       
-      // Si es RUC, mostrar información adicional
       if (docNumber.length === 11 && result.direccion) {
         console.log('📍 Dirección:', result.direccion);
         console.log('📊 Estado:', result.estado);
@@ -466,7 +434,10 @@ async function searchClient() {
   }
 }
 
-// Finalizar venta con toda la información
+// ========================================
+// FINALIZAR VENTA - VISOR PDF CORREGIDO
+// ========================================
+
 async function finalizeSale() {
   if (cart.length === 0) return;
   
@@ -475,19 +446,16 @@ async function finalizeSale() {
   btnFinalize.textContent = '⏳ Procesando...';
   
   try {
-    // Obtener datos del cliente
     const clientDoc = document.getElementById('clientDoc').value.trim();
     const clientName = document.getElementById('clientName').value.trim();
     const observations = document.getElementById('saleObservations').value.trim();
     
-    // Preparar items
     const items = cart.map(item => ({
       id_producto: item.id_producto,
       cantidad: item.cantidad,
       precio_especial: item.precio_especial ? item.precio_unitario : undefined
     }));
     
-    // Preparar observaciones completas
     let finalObservations = '';
     if (clientDoc && clientName !== 'Usuario Final') {
       finalObservations += `Cliente: ${clientName} (${clientDoc})`;
@@ -498,7 +466,6 @@ async function finalizeSale() {
       finalObservations += ` | ${observations}`;
     }
     
-    // Crear la venta
     const response = await SaleAPI.create({ 
       items, 
       observaciones: finalObservations 
@@ -506,27 +473,18 @@ async function finalizeSale() {
     const sale = response.data;
     
     showNotification('✅ Venta registrada exitosamente', 'success');
-    
-    // Cerrar modal de confirmación
     closeConfirmSaleModal();
     
-    // Generar y descargar PDF automáticamente
-    setTimeout(() => {
-      SaleAPI.downloadPDF(sale.id);
-      showNotification('📄 Descargando comprobante...', 'success');
-      
-      // Intentar imprimir (abrirá el diálogo de impresión del navegador)
-      setTimeout(() => {
-        printReceipt(sale.id);
-      }, 1000);
-    }, 500);
-    
-    // Limpiar carrito
     cart = [];
     updateCart();
-    
-    // Recargar productos disponibles
     loadAvailableProducts();
+    
+    // ========================================
+    // ABRIR PDF EN VENTANA EMERGENTE
+    // ========================================
+    setTimeout(() => {
+      openPDFViewer(sale.id);
+    }, 500);
     
   } catch (error) {
     console.error('Error finalizando venta:', error);
@@ -542,14 +500,17 @@ async function finalizeSale() {
   }
 }
 
-// Función para imprimir (abre ventana de vista previa)
-async function printReceipt(saleId) {
+/**
+ * Abrir el PDF del servidor en una ventana emergente
+ * Igual que en ventas.js pero con visor integrado
+ */
+async function openPDFViewer(saleId) {
   try {
     const token = getToken();
     
-    showNotification('🖨️ Generando vista previa para impresión...', 'info');
+    showNotification('📄 Generando boleta...', 'info');
     
-    // Obtener el PDF como blob
+    // Obtener el PDF como blob desde el servidor
     const response = await fetch(`${API_URL}/sales/${saleId}/pdf`, {
       method: 'GET',
       headers: {
@@ -562,39 +523,198 @@ async function printReceipt(saleId) {
     }
     
     const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
+    const pdfUrl = URL.createObjectURL(blob);
     
-    // Abrir en nueva ventana para vista previa e impresión
-    const printWindow = window.open(url, '_blank', 'width=800,height=600');
+    // Abrir ventana emergente con el visor
+    const ventana = window.open('', '_blank', 'width=900,height=700,menubar=yes,toolbar=yes,scrollbars=yes,resizable=yes');
     
-    if (!printWindow) {
+    if (!ventana) {
       showNotification('⚠️ Por favor habilite ventanas emergentes', 'error');
-      // Si no se puede abrir ventana, descargar directamente
+      
+      // Fallback: descargar directamente
       const link = document.createElement('a');
-      link.href = url;
+      link.href = pdfUrl;
       link.download = `boleta_${saleId}.pdf`;
       link.click();
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(pdfUrl);
       return;
     }
     
-    // Esperar a que cargue y luego mostrar diálogo de impresión
-    printWindow.addEventListener('load', () => {
-      setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-      }, 500);
-    });
+    // Escribir HTML del visor en la ventana
+    ventana.document.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Boleta de Venta #${saleId} - Semaymar E.I.R.L.</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          
+          .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          
+          .header-actions {
+            display: flex;
+            gap: 12px;
+          }
+          
+          .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+          
+          .btn-primary {
+            background: white;
+            color: #10b981;
+          }
+          
+          .btn-primary:hover {
+            background: #f0fdf4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+          }
+          
+          .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+          }
+          
+          .btn-secondary:hover {
+            background: rgba(255,255,255,0.35);
+            border-color: rgba(255,255,255,0.5);
+          }
+          
+          .btn:active {
+            transform: translateY(0);
+          }
+          
+          .pdf-container {
+            flex: 1;
+            padding: 0;
+            background: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          
+          embed {
+            width: 100%;
+            height: 100%;
+            border: none;
+          }
+          
+          .footer {
+            background: white;
+            padding: 16px 30px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+          }
+          
+          @media print {
+            .header, .footer {
+              display: none;
+            }
+            .pdf-container {
+              padding: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🧾 Boleta de Venta #${saleId}</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="window.print()">
+              🖨️ Imprimir
+            </button>
+            <button class="btn btn-primary" onclick="descargarPDF()">
+              📥 Descargar
+            </button>
+            <button class="btn btn-secondary" onclick="window.close()">
+              ✕ Cerrar
+            </button>
+          </div>
+        </div>
+        
+        <div class="pdf-container">
+          <embed src="${pdfUrl}" type="application/pdf" width="100%" height="100%" />
+        </div>
+        
+        <div class="footer">
+          📄 Boleta generada automáticamente - Semaymar E.I.R.L. - ${new Date().toLocaleString('es-PE')}
+        </div>
+        
+        <script>
+          function descargarPDF() {
+            const link = document.createElement('a');
+            link.href = "${pdfUrl}";
+            link.download = "boleta_${saleId}.pdf";
+            link.click();
+          }
+          
+          // Auto-imprimir al cargar (opcional)
+          // window.addEventListener('load', () => {
+          //   setTimeout(() => window.print(), 1000);
+          // });
+        </script>
+      </body>
+      </html>
+    `);
     
-    showNotification('✅ Ventana de impresión abierta', 'success');
+    ventana.document.close();
+    
+    showNotification('✅ Boleta abierta en nueva ventana', 'success');
     
   } catch (error) {
-    console.error('Error abriendo vista previa:', error);
-    showNotification('❌ Error al abrir vista previa. El PDF se descargó.', 'error');
+    console.error('Error abriendo visor de PDF:', error);
+    showNotification('❌ Error al abrir visor de PDF', 'error');
+    
+    // Fallback: descargar usando la API directamente
+    SaleAPI.downloadPDF(saleId);
   }
 }
 
-// Completar venta (mantener función antigua por compatibilidad, pero ahora abre el modal)
 async function completeSale() {
   showConfirmSaleModal();
 }
@@ -603,13 +723,9 @@ async function completeSale() {
 document.addEventListener('DOMContentLoaded', () => {
   if (!requireAuth()) return;
   
-  // Cargar productos disponibles
   loadAvailableProducts();
-  
-  // Enfocar búsqueda
   searchInput.focus();
   
-  // Agregar listener para Enter en campo de DNI/RUC
   const clientDocInput = document.getElementById('clientDoc');
   if (clientDocInput) {
     clientDocInput.addEventListener('keypress', (e) => {
@@ -619,11 +735,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     
-    // Auto-buscar cuando complete 8 u 11 dígitos
     clientDocInput.addEventListener('input', (e) => {
       const value = e.target.value.trim();
       if (value.length === 8 || value.length === 11) {
-        // Esperar un poco por si sigue escribiendo
         clearTimeout(clientDocInput.autoSearchTimeout);
         clientDocInput.autoSearchTimeout = setTimeout(() => {
           searchClient();

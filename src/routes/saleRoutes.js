@@ -1,6 +1,6 @@
 /**
  * saleRoutes.js
- * Rutas para el módulo de ventas
+ * Rutas para el módulo de ventas - CON SOPORTE DE TOKEN EN QUERY
  */
 
 const express = require('express');
@@ -9,6 +9,38 @@ const saleController = require('../controllers/saleController');
 const pdfController = require('../controllers/pdfController');
 const { verifyToken, requireAdminOrCajero } = require('../middlewares/auth');
 const { body, param, query } = require('express-validator');
+
+// ========================================
+// MIDDLEWARE ESPECIAL PARA PDF
+// ========================================
+
+/**
+ * Middleware que permite autenticación por token en query parameter
+ * Útil para abrir PDFs en nueva ventana
+ */
+const verifyTokenOrQuery = async (req, res, next) => {
+  // Primero intentar con el header Authorization (normal)
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return verifyToken(req, res, next);
+  }
+  
+  // Si no hay header, buscar token en query
+  const queryToken = req.query.token;
+  
+  if (queryToken) {
+    // Agregar el token al header temporalmente
+    req.headers.authorization = `Bearer ${queryToken}`;
+    return verifyToken(req, res, next);
+  }
+  
+  // Si no hay ni header ni query, error
+  return res.status(401).json({
+    success: false,
+    error: 'Token no proporcionado'
+  });
+};
 
 // ========================================
 // VALIDACIONES
@@ -51,72 +83,60 @@ const validateSaleId = [
 /**
  * GET /api/sales
  * Obtener todas las ventas
- * Query params: ?limit=100&offset=0
- * Requiere: Autenticación
  */
 router.get('/', verifyToken, saleController.getAllSales);
 
 /**
  * GET /api/sales/stats
  * Obtener estadísticas generales de ventas
- * IMPORTANTE: Esta ruta debe ir ANTES de /api/sales/:id
- * Requiere: Autenticación
  */
 router.get('/stats', verifyToken, saleController.getStats);
 
 /**
  * GET /api/sales/today
  * Obtener ventas del día actual
- * Requiere: Autenticación
  */
 router.get('/today', verifyToken, saleController.getTodaySales);
 
 /**
  * GET /api/sales/top-products
  * Obtener productos más vendidos
- * Query params: ?limit=10
- * Requiere: Autenticación
  */
 router.get('/top-products', verifyToken, saleController.getTopProducts);
 
 /**
  * GET /api/sales/range
  * Obtener ventas por rango de fechas
- * Query params: ?start=2025-01-01&end=2025-01-31
- * Requiere: Autenticación
  */
 router.get('/range', verifyToken, saleController.getSalesByDateRange);
 
 /**
  * GET /api/sales/:id
  * Obtener una venta específica con sus detalles
- * Requiere: Autenticación
  */
 router.get('/:id', verifyToken, validateSaleId, saleController.getSaleById);
 
 // ========================================
-// RUTAS DE PDF
+// RUTAS DE PDF - CON TOKEN EN QUERY
 // ========================================
 
 /**
  * GET /api/sales/:id/pdf
  * Descargar boleta en PDF
- * Requiere: Autenticación
+ * Acepta token en header O en query parameter (?token=...)
  */
-router.get('/:id/pdf', verifyToken, validateSaleId, pdfController.generateSaleReceipt);
+router.get('/:id/pdf', verifyTokenOrQuery, validateSaleId, pdfController.generateSaleReceipt);
 
 /**
  * GET /api/sales/:id/pdf/view
  * Ver boleta en el navegador
- * Requiere: Autenticación
+ * Acepta token en header O en query parameter
  */
-router.get('/:id/pdf/view', verifyToken, validateSaleId, pdfController.viewSaleReceipt);
+router.get('/:id/pdf/view', verifyTokenOrQuery, validateSaleId, pdfController.viewSaleReceipt);
 
 /**
  * POST /api/sales/report/pdf
  * Generar reporte de ventas en PDF
- * Body: { start?: '2025-01-01', end?: '2025-01-31' }
- * Requiere: Autenticación
  */
 router.post('/report/pdf', verifyToken, pdfController.generateSalesReport);
 
@@ -127,19 +147,12 @@ router.post('/report/pdf', verifyToken, pdfController.generateSalesReport);
 /**
  * POST /api/sales/preview
  * Preview de venta (calcular sin guardar)
- * Body: { items: [{id_producto, cantidad, precio_especial?}] }
- * Requiere: Autenticación
  */
 router.post('/preview', verifyToken, validateCreateSale, saleController.previewSale);
 
 /**
  * POST /api/sales
  * Crear nueva venta
- * Body: { 
- *   items: [{id_producto, cantidad, precio_especial?}],
- *   observaciones?: string 
- * }
- * Requiere: Autenticación + Rol Admin o Cajero
  */
 router.post('/', verifyToken, requireAdminOrCajero, validateCreateSale, saleController.createSale);
 
@@ -150,7 +163,6 @@ router.post('/', verifyToken, requireAdminOrCajero, validateCreateSale, saleCont
 /**
  * DELETE /api/sales/:id
  * Cancelar venta y restaurar stock
- * Requiere: Autenticación + Rol Admin o Cajero
  */
 router.delete('/:id', verifyToken, requireAdminOrCajero, validateSaleId, saleController.cancelSale);
 
