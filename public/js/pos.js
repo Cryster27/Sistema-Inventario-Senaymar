@@ -422,6 +422,7 @@ function showConfirmSaleModal() {
   document.getElementById('clientDoc').value = '';
   document.getElementById('clientName').value = 'Usuario Final';
   document.getElementById('saleObservations').value = '';
+  document.getElementById('paymentMethod').value = 'efectivo'; // AGREGAR ESTA LÍNEA
   
   const itemsContainer = document.getElementById('confirmSaleItems');
   const itemsHtml = cart.map(item => `
@@ -442,7 +443,13 @@ function showConfirmSaleModal() {
   itemsContainer.innerHTML = itemsHtml;
   
   const total = cart.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
-  document.getElementById('confirmSubtotal').textContent = formatCurrency(total);
+  
+  // CALCULAR IGV - AGREGAR ESTAS LÍNEAS
+  const subtotal = total / 1.18;
+  const igv = total - subtotal;
+  
+  document.getElementById('confirmSubtotal').textContent = formatCurrency(subtotal);
+  document.getElementById('confirmIGV').textContent = formatCurrency(igv);
   document.getElementById('confirmTotal').textContent = formatCurrency(total);
   
   document.getElementById('confirmSaleModal').classList.add('active');
@@ -526,6 +533,11 @@ async function finalizeSale() {
     const clientName = document.getElementById('clientName').value.trim();
     const observations = document.getElementById('saleObservations').value.trim();
     
+    // ✅ VERIFICAR QUE ESTA LÍNEA ESTÉ CORRECTA
+    const metodoPago = document.getElementById('paymentMethod').value;
+    
+    console.log('📋 Método de pago seleccionado:', metodoPago); // DEBUG
+    
     const items = cart.map(item => ({
       id_producto: item.id_producto,
       cantidad: item.cantidad,
@@ -543,13 +555,17 @@ async function finalizeSale() {
     }
     
     console.log('📡 Enviando venta al servidor...');
+    console.log('Datos a enviar:', { items, observaciones: finalObservations, metodo_pago: metodoPago }); // DEBUG
+    
+    // ✅ VERIFICAR QUE SE ENVÍE metodo_pago
     const response = await SaleAPI.create({ 
       items, 
-      observaciones: finalObservations 
+      observaciones: finalObservations,
+      metodo_pago: metodoPago
     });
     const sale = response.data;
     
-    console.log('✅ Venta creada, ID:', sale.id);
+    console.log('✅ Venta creada:', sale); // DEBUG
     
     showNotification('✅ Venta registrada exitosamente', 'success');
     closeConfirmSaleModal();
@@ -558,7 +574,6 @@ async function finalizeSale() {
     updateCart();
     loadAvailableProducts();
     
-    // ABRIR PDF
     console.log('📄 Abriendo visor de PDF...');
     setTimeout(() => {
       openPDFViewer(sale.id);

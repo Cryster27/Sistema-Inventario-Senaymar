@@ -35,6 +35,7 @@ function renderSales(sales) {
         <tr>
           <th>ID</th>
           <th>Fecha</th>
+          <th>Método de Pago</th>
           <th>Total</th>
           <th>Observaciones</th>
           <th>Acciones</th>
@@ -45,6 +46,11 @@ function renderSales(sales) {
           <tr>
             <td><strong>#${s.id}</strong></td>
             <td>${formatDate(s.fecha)}</td>
+            <td>
+              <span class="payment-badge payment-${s.metodo_pago || 'efectivo'}">
+                ${getPaymentLabel(s.metodo_pago || 'efectivo')}
+              </span>
+            </td>
             <td><strong>${formatCurrency(s.total)}</strong></td>
             <td>${s.observaciones || '-'}</td>
             <td>
@@ -60,6 +66,17 @@ function renderSales(sales) {
   `;
   
   container.innerHTML = html;
+}
+
+// Función auxiliar para obtener el label del método de pago
+function getPaymentLabel(metodo) {
+  const labels = {
+    'efectivo': '💵 Efectivo',
+    'yape': '📱 Yape',
+    'transferencia': '🏦 Transferencia',
+    'tarjeta': '💳 Tarjeta'
+  };
+  return labels[metodo] || '💵 Efectivo';
 }
 
 // Actualizar estadísticas

@@ -66,24 +66,35 @@ class Sale {
     return await query(sql);
   }
 
-  /**
-   * Crear nueva venta
-   * @param {object} saleData - Datos de la venta
+    /**
+   * Crear nueva venta CON MÉTODO DE PAGO E IGV
    */
   static async create(saleData) {
-    const { total, observaciones } = saleData;
+    const { total, observaciones, metodo_pago = 'efectivo' } = saleData;
+    
+    // Calcular IGV
+    const { subtotal, igv } = this.calcularIGV(total);
     
     const sql = `
-      INSERT INTO sales (total, observaciones)
-      VALUES (?, ?)
+      INSERT INTO sales (total, subtotal, igv, metodo_pago, observaciones)
+      VALUES (?, ?, ?, ?, ?)
     `;
     
-    const result = await query(sql, [total, observaciones || null]);
+    const result = await query(sql, [
+      total, 
+      subtotal, 
+      igv, 
+      metodo_pago, 
+      observaciones || null
+    ]);
 
     return {
       id: result.insertId,
       fecha: new Date(),
       total,
+      subtotal,
+      igv,
+      metodo_pago,
       observaciones
     };
   }
@@ -147,6 +158,22 @@ class Sale {
     await query(sql, [id]);
     return true;
   }
+
+  /**
+   * Calcular IGV (18%) desde el total
+   * @param {number} total - Total con IGV incluido
+   * @returns {Object} - { subtotal, igv }
+   */
+  static calcularIGV(total) {
+    const subtotal = Math.round((total / 1.18) * 100) / 100;
+    const igv = Math.round((total - subtotal) * 100) / 100;
+    return { subtotal, igv };
+  }
+
+
 }
+
+
+
 
 module.exports = Sale;

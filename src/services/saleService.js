@@ -18,84 +18,87 @@ class SaleService {
    * @returns {Object} - Venta procesada
    */
   static async processSale(saleData, userId = null) {
-    const { items, observaciones } = saleData;
+  // ✅ EXTRAER metodo_pago
+  const { items, observaciones, metodo_pago = 'efectivo' } = saleData;
 
-    // Validar que hay items
-    if (!items || items.length === 0) {
-      throw new Error('La venta debe contener al menos un producto');
-    }
+  console.log('🔧 Procesando venta con método:', metodo_pago); // DEBUG
 
-    // Validar stock disponible
-    const stockValidation = await InventoryService.validateStock(items);
-    if (!stockValidation.valid) {
-      const error = new Error('Stock insuficiente para algunos productos');
-      error.stockErrors = stockValidation.errors;
-      throw error;
-    }
+  if (!items || items.length === 0) {
+    throw new Error('La venta debe contener al menos un producto');
+  }
 
-    // Calcular total de la venta - CORREGIDO
-    let total = 0;
-    for (const item of items) {
+  const stockValidation = await InventoryService.validateStock(items);
+  if (!stockValidation.valid) {
+    const error = new Error('Stock insuficiente para algunos productos');
+    error.stockErrors = stockValidation.errors;
+    throw error;
+  }
+
+  // Calcular total
+  let total = 0;
+  for (const item of items) {
+    const product = await Product.findById(item.id_producto);
+    const precioUnitario = item.precio_especial || product.precio;
+    const subtotal = calculateSubtotal(item.cantidad, precioUnitario);
+    total += subtotal;
+  }
+
+  const result = await transaction(async (connection) => {
+    const { subtotal, igv } = Sale.calcularIGV(total);
+    
+    console.log('💾 Insertando venta con método:', metodo_pago); // DEBUG
+    
+    // ✅ INSERTAR metodo_pago EN LA BD
+    const saleResult = await connection.execute(
+      'INSERT INTO sales (total, subtotal, igv, metodo_pago, observaciones, id_usuario) VALUES (?, ?, ?, ?, ?, ?)',
+      [total, subtotal, igv, metodo_pago, observaciones || null, userId]
+    );
+
+    const saleId = saleResult[0].insertId;
+
+    // ... resto del código igual
+    
+    const detailsPromises = items.map(async (item) => {
       const product = await Product.findById(item.id_producto);
       const precioUnitario = item.precio_especial || product.precio;
       const subtotal = calculateSubtotal(item.cantidad, precioUnitario);
-      total += subtotal;
-    }
-    
-    console.log('Total calculado:', total); // Debug
 
-    // Procesar venta en transacción
-    const result = await transaction(async (connection) => {
-      // 1. Crear la venta
-      const saleResult = await connection.execute(
-        'INSERT INTO sales (total, observaciones, id_usuario) VALUES (?, ?, ?)',
-        [total, observaciones || null, userId]
+      return connection.execute(
+        `INSERT INTO sales_details 
+         (id_sale, id_producto, cantidad, precio_unitario, subtotal, precio_especial)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          saleId,
+          item.id_producto,
+          item.cantidad,
+          precioUnitario,
+          subtotal,
+          item.precio_especial ? true : false
+        ]
       );
-
-      const saleId = saleResult[0].insertId;
-
-      // 2. Crear detalles de venta
-      const detailsPromises = items.map(async (item) => {
-        const product = await Product.findById(item.id_producto);
-        
-        // Determinar precio (especial o normal)
-        const precioUnitario = item.precio_especial || product.precio;
-        const subtotal = calculateSubtotal(item.cantidad, precioUnitario);
-
-        return connection.execute(
-          `INSERT INTO sales_details 
-           (id_sale, id_producto, cantidad, precio_unitario, subtotal, precio_especial)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            saleId,
-            item.id_producto,
-            item.cantidad,
-            precioUnitario,
-            subtotal,
-            item.precio_especial ? true : false
-          ]
-        );
-      });
-
-      await Promise.all(detailsPromises);
-
-      // 3. Descontar stock
-      const stockPromises = items.map((item) => 
-        connection.execute(
-          'UPDATE products SET stock = stock - ? WHERE id = ?',
-          [item.cantidad, item.id_producto]
-        )
-      );
-
-      await Promise.all(stockPromises);
-
-      return saleId;
     });
 
-    // Obtener la venta completa
-    const sale = await this.getSaleWithDetails(result);
-    return sale;
-  }
+    await Promise.all(detailsPromises);
+
+    const stockPromises = items.map((item) => 
+      connection.execute(
+        'UPDATE products SET stock = stock - ? WHERE id = ?',
+        [item.cantidad, item.id_producto]
+      )
+    );
+
+    await Promise.all(stockPromises);
+
+    return saleId;
+  });
+
+  const sale = await this.getSaleWithDetails(result);
+  return sale;
+}
+
+
+
+
 
   /**
    * Obtener venta con sus detalles

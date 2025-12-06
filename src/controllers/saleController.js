@@ -110,10 +110,17 @@ const previewSale = async (req, res, next) => {
 
     const { items } = req.body;
     const preview = await SaleService.previewSale(items);
+    
+    // Calcular IGV
+    const { subtotal, igv } = Sale.calcularIGV(preview.total);
 
     res.json({
       success: true,
-      data: preview
+      data: {
+        ...preview,
+        subtotal,
+        igv
+      }
     });
   } catch (error) {
     if (error.message === 'Carrito inválido') {
@@ -140,10 +147,17 @@ const createSale = async (req, res, next) => {
       });
     }
 
-    const { items, observaciones } = req.body;
+    // ✅ ASEGURARSE DE EXTRAER metodo_pago
+    const { items, observaciones, metodo_pago = 'efectivo' } = req.body;
+    
+    console.log('📥 Datos recibidos en controller:', { items: items.length, observaciones, metodo_pago }); // DEBUG
 
-    // Procesar la venta con el ID del usuario autenticado
-    const sale = await SaleService.processSale({ items, observaciones }, req.user.id);
+    // ✅ PASAR metodo_pago al servicio
+    const sale = await SaleService.processSale({ 
+      items, 
+      observaciones,
+      metodo_pago 
+    }, req.user.id);
 
     res.status(201).json({
       success: true,
@@ -151,7 +165,6 @@ const createSale = async (req, res, next) => {
       data: sale
     });
   } catch (error) {
-    // Errores de stock
     if (error.stockErrors) {
       return res.status(400).json({
         success: false,
@@ -160,7 +173,6 @@ const createSale = async (req, res, next) => {
       });
     }
 
-    // Otros errores de validación
     if (error.message.includes('debe contener') || error.message.includes('inválid')) {
       return res.status(400).json({
         success: false,
