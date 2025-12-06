@@ -1,15 +1,120 @@
 /**
  * pos.js
- * Lógica del Punto de Venta - VISOR PDF CORREGIDO
+ * Lógica del Punto de Venta - COMPLETO CON TODAS LAS FUNCIONES
  */
 
 // Carrito de compras
 let cart = [];
 let allProducts = [];
 
-// [... Todo el código anterior se mantiene igual hasta finalizeSale ...]
+// ========================================
+// FUNCIONES DE UTILIDAD (FALTABAN ESTAS)
+// ========================================
 
-// Cargar productos disponibles
+/**
+ * Mostrar notificación temporal
+ */
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    padding: 16px 24px;
+    background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 10000;
+    font-size: 15px;
+    font-weight: 600;
+    animation: slideInRight 0.3s ease-out;
+    max-width: 400px;
+  `;
+  
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  // Agregar animación
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOutRight {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(100px); }
+    }
+  `;
+  if (!document.getElementById('notification-styles')) {
+    style.id = 'notification-styles';
+    document.head.appendChild(style);
+  }
+  
+  // Remover después de 3 segundos
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 3000);
+}
+
+/**
+ * Mostrar modal simple
+ */
+function showModal(title, content) {
+  let modal = document.getElementById('simpleModal');
+  
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'simpleModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(3px);
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 16px; max-width: 800px; width: 90%; max-height: 90vh; overflow: hidden; box-shadow: 0 25px 70px rgba(0,0,0,0.4);">
+      <div style="padding: 24px; border-bottom: 3px solid #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 20px;">${title}</h2>
+        <button onclick="closeSimpleModal()" style="background: rgba(255,255,255,0.2); border: none; font-size: 28px; color: white; cursor: pointer; padding: 4px 12px; border-radius: 8px;">×</button>
+      </div>
+      <div style="padding: 24px; overflow-y: auto; max-height: calc(90vh - 100px);">
+        ${content}
+      </div>
+    </div>
+  `;
+  
+  modal.style.display = 'flex';
+}
+
+/**
+ * Cerrar modal simple
+ */
+function closeSimpleModal() {
+  const modal = document.getElementById('simpleModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// ========================================
+// FUNCIONES DEL POS
+// ========================================
+
 async function loadAvailableProducts() {
   try {
     const response = await ProductAPI.getAll();
@@ -24,7 +129,6 @@ async function loadAvailableProducts() {
   }
 }
 
-// Renderizar grid de productos
 function renderProductsGrid() {
   const grid = document.getElementById('productsGrid');
   
@@ -39,9 +143,7 @@ function renderProductsGrid() {
         ${p.codigo}
       </div>
       <h4>${p.nombre}</h4>
-      <div class="product-info">
-        Stock: ${p.stock} ${p.unidad}
-      </div>
+      <div class="product-info">Stock: ${p.stock} ${p.unidad}</div>
       <div class="product-price">${formatCurrency(p.precio)}</div>
     </div>
   `).join('');
@@ -49,7 +151,6 @@ function renderProductsGrid() {
   grid.innerHTML = html;
 }
 
-// Búsqueda de productos
 let searchTimeout;
 const searchInput = document.getElementById('searchProduct');
 const searchResults = document.getElementById('searchResults');
@@ -87,12 +188,8 @@ async function searchProducts(query) {
     
     const html = products.map(p => `
       <div class="search-result-item" onclick="addToCart(${p.id}, '${p.codigo.replace(/'/g, "\\'")}')">
-        <div>
-          <span class="product-code">${p.codigo}</span> - ${p.nombre}
-        </div>
-        <div class="product-stock">
-          Stock: ${p.stock} ${p.unidad} | ${formatCurrency(p.precio)}
-        </div>
+        <div><span class="product-code">${p.codigo}</span> - ${p.nombre}</div>
+        <div class="product-stock">Stock: ${p.stock} ${p.unidad} | ${formatCurrency(p.precio)}</div>
       </div>
     `).join('');
     
@@ -175,14 +272,9 @@ function updateCart() {
       <div class="cart-item-details">
         <div class="quantity-control">
           <button class="btn-qty" onclick="decreaseQuantity(${index})">−</button>
-          <input 
-            type="number" 
-            class="qty-input" 
-            value="${item.cantidad}" 
-            onchange="updateQuantity(${index}, this.value)"
-            min="0.01"
-            step="${item.unidad === 'unidad' || item.unidad === 'docena' ? '1' : '0.01'}"
-          >
+          <input type="number" class="qty-input" value="${item.cantidad}" 
+            onchange="updateQuantity(${index}, this.value)" min="0.01"
+            step="${item.unidad === 'unidad' || item.unidad === 'docena' ? '1' : '0.01'}">
           <button class="btn-qty" onclick="increaseQuantity(${index})">+</button>
         </div>
         <span>${item.unidad}</span>
@@ -308,26 +400,11 @@ async function previewSale() {
     
     const content = `
       <table style="width: 100%; margin-bottom: 20px;">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio</th>
-            <th>Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHtml}
-        </tbody>
+        <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+        <tbody>${itemsHtml}</tbody>
       </table>
       <div style="text-align: right; font-size: 20px; margin-top: 20px;">
         <strong>TOTAL: ${formatCurrency(preview.total)}</strong>
-      </div>
-      <div style="margin-top: 20px; padding: 12px; background: #f3f4f6; border-radius: 8px;">
-        <small>
-          ${preview.cantidad_productos} productos diferentes<br>
-          ${preview.cantidad_items} items en total
-        </small>
       </div>
     `;
     
@@ -413,12 +490,6 @@ async function searchClient() {
     if (result.success) {
       nameInput.value = result.nombreCompleto;
       showNotification(`✅ Cliente encontrado: ${result.nombreCompleto}`, 'success');
-      
-      if (docNumber.length === 11 && result.direccion) {
-        console.log('📍 Dirección:', result.direccion);
-        console.log('📊 Estado:', result.estado);
-        console.log('📋 Condición:', result.condicion);
-      }
     } else {
       nameInput.value = 'Usuario Final';
       showNotification(`⚠️ ${result.error || 'No se encontró el documento'}`, 'error');
@@ -427,7 +498,7 @@ async function searchClient() {
   } catch (error) {
     console.error('Error buscando cliente:', error);
     nameInput.value = 'Usuario Final';
-    showNotification('❌ Error al buscar cliente. Intente nuevamente.', 'error');
+    showNotification('❌ Error al buscar cliente', 'error');
   } finally {
     btnSearch.disabled = false;
     btnSearch.textContent = '🔍 Buscar';
@@ -435,11 +506,16 @@ async function searchClient() {
 }
 
 // ========================================
-// FINALIZAR VENTA - VISOR PDF CORREGIDO
+// FINALIZAR VENTA Y ABRIR PDF
 // ========================================
 
 async function finalizeSale() {
-  if (cart.length === 0) return;
+  console.log('🚀 Iniciando finalización de venta');
+  
+  if (cart.length === 0) {
+    console.log('❌ Carrito vacío');
+    return;
+  }
   
   const btnFinalize = document.getElementById('btnFinalizeSale');
   btnFinalize.disabled = true;
@@ -466,11 +542,14 @@ async function finalizeSale() {
       finalObservations += ` | ${observations}`;
     }
     
+    console.log('📡 Enviando venta al servidor...');
     const response = await SaleAPI.create({ 
       items, 
       observaciones: finalObservations 
     });
     const sale = response.data;
+    
+    console.log('✅ Venta creada, ID:', sale.id);
     
     showNotification('✅ Venta registrada exitosamente', 'success');
     closeConfirmSaleModal();
@@ -479,20 +558,19 @@ async function finalizeSale() {
     updateCart();
     loadAvailableProducts();
     
-    // ========================================
-    // ABRIR PDF EN VENTANA EMERGENTE
-    // ========================================
+    // ABRIR PDF
+    console.log('📄 Abriendo visor de PDF...');
     setTimeout(() => {
       openPDFViewer(sale.id);
     }, 500);
     
   } catch (error) {
-    console.error('Error finalizando venta:', error);
+    console.error('❌ ERROR:', error);
     
     if (error.message && error.message.includes('Stock insuficiente')) {
-      showNotification('❌ Stock insuficiente para algunos productos', 'error');
+      showNotification('❌ Stock insuficiente', 'error');
     } else {
-      showNotification('❌ Error al procesar la venta', 'error');
+      showNotification('❌ Error: ' + error.message, 'error');
     }
   } finally {
     btnFinalize.disabled = false;
@@ -500,38 +578,58 @@ async function finalizeSale() {
   }
 }
 
-/**
- * Abrir el PDF del servidor en una ventana emergente
- * Igual que en ventas.js pero con visor integrado
- */
 async function openPDFViewer(saleId) {
+  console.log('========================================');
+  console.log('📄 ABRIENDO PDF - ID:', saleId);
+  console.log('========================================');
+  
   try {
     const token = getToken();
+    const url = `${API_URL}/sales/${saleId}/pdf`;
     
-    showNotification('📄 Generando boleta...', 'info');
+    console.log('URL:', url);
+    console.log('Token:', token ? 'OK' : 'FALTA');
     
-    // Obtener el PDF como blob desde el servidor
-    const response = await fetch(`${API_URL}/sales/${saleId}/pdf`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/pdf'
       }
     });
     
+    console.log('Status:', response.status);
+    console.log('OK:', response.ok);
+    
     if (!response.ok) {
-      throw new Error('Error al obtener el PDF');
+      const errorText = await response.text();
+      console.error('Error del servidor:', errorText);
+      throw new Error(`Error ${response.status}`);
     }
     
-    const blob = await response.blob();
-    const pdfUrl = URL.createObjectURL(blob);
+    const pdfBlob = await response.blob();
+    console.log('Blob size:', pdfBlob.size, 'bytes');
     
-    // Abrir ventana emergente con el visor
-    const ventana = window.open('', '_blank', 'width=900,height=700,menubar=yes,toolbar=yes,scrollbars=yes,resizable=yes');
+    if (pdfBlob.size === 0) {
+      throw new Error('PDF vacío');
+    }
+    
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    console.log('Blob URL:', pdfUrl);
+    
+    // Calcular posición centrada
+    const width = 900;
+    const height = 700;
+    const left = (screen.width / 2) - (width / 2);
+    const top = (screen.height / 2) - (height / 2);
+    
+    // Abrir ventana centrada
+    const ventana = window.open('', '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes`);
     
     if (!ventana) {
-      showNotification('⚠️ Por favor habilite ventanas emergentes', 'error');
+      console.error('Ventana bloqueada');
+      showNotification('⚠️ Habilite ventanas emergentes', 'error');
       
-      // Fallback: descargar directamente
       const link = document.createElement('a');
       link.href = pdfUrl;
       link.download = `boleta_${saleId}.pdf`;
@@ -540,14 +638,15 @@ async function openPDFViewer(saleId) {
       return;
     }
     
-    // Escribir HTML del visor en la ventana
+    console.log('✅ Ventana abierta, escribiendo HTML...');
+    
     ventana.document.write(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Boleta de Venta #${saleId} - Semaymar E.I.R.L.</title>
+        <title>Boleta #${saleId}</title>
         <style>
           * {
             margin: 0;
@@ -557,69 +656,51 @@ async function openPDFViewer(saleId) {
           
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f3f4f6;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
           }
           
           .header {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            padding: 20px 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           }
           
-          .header h1 {
-            font-size: 22px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+          .header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
           }
           
           .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 8px;
           }
           
           .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-          }
-          
-          .btn-primary {
             background: white;
             color: #10b981;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
           }
           
-          .btn-primary:hover {
+          .btn:hover {
             background: #f0fdf4;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-          }
-          
-          .btn-secondary {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.3);
-          }
-          
-          .btn-secondary:hover {
-            background: rgba(255,255,255,0.35);
-            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           }
           
           .btn:active {
@@ -627,12 +708,9 @@ async function openPDFViewer(saleId) {
           }
           
           .pdf-container {
-            flex: 1;
-            padding: 0;
+            width: 100%;
+            height: calc(100vh - 48px);
             background: #e5e7eb;
-            display: flex;
-            justify-content: center;
-            align-items: center;
           }
           
           embed {
@@ -641,62 +719,50 @@ async function openPDFViewer(saleId) {
             border: none;
           }
           
-          .footer {
-            background: white;
-            padding: 16px 30px;
-            border-top: 2px solid #e5e7eb;
-            text-align: center;
-            font-size: 13px;
-            color: #6b7280;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-          }
-          
           @media print {
-            .header, .footer {
+            .header {
               display: none;
             }
             .pdf-container {
-              padding: 0;
+              height: 100vh;
             }
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>🧾 Boleta de Venta #${saleId}</h1>
+          <h2>🧾 Boleta de Venta #${saleId}</h2>
           <div class="header-actions">
-            <button class="btn btn-primary" onclick="window.print()">
+            <button class="btn" onclick="window.print()" title="Imprimir">
               🖨️ Imprimir
             </button>
-            <button class="btn btn-primary" onclick="descargarPDF()">
+            <button class="btn" onclick="descargar()" title="Descargar">
               📥 Descargar
             </button>
-            <button class="btn btn-secondary" onclick="window.close()">
+            <button class="btn" onclick="window.close()" title="Cerrar">
               ✕ Cerrar
             </button>
           </div>
         </div>
-        
         <div class="pdf-container">
           <embed src="${pdfUrl}" type="application/pdf" width="100%" height="100%" />
         </div>
-        
-        <div class="footer">
-          📄 Boleta generada automáticamente - Semaymar E.I.R.L. - ${new Date().toLocaleString('es-PE')}
-        </div>
-        
         <script>
-          function descargarPDF() {
+          function descargar() {
             const link = document.createElement('a');
-            link.href = "${pdfUrl}";
-            link.download = "boleta_${saleId}.pdf";
+            link.href = '${pdfUrl}';
+            link.download = 'boleta_${saleId}.pdf';
             link.click();
           }
           
-          // Auto-imprimir al cargar (opcional)
-          // window.addEventListener('load', () => {
-          //   setTimeout(() => window.print(), 1000);
-          // });
+          // Cerrar con Escape
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+              window.close();
+            }
+          });
+          
+          console.log('✅ PDF cargado correctamente');
         </script>
       </body>
       </html>
@@ -704,14 +770,21 @@ async function openPDFViewer(saleId) {
     
     ventana.document.close();
     
-    showNotification('✅ Boleta abierta en nueva ventana', 'success');
+    console.log('✅ PDF ABIERTO CORRECTAMENTE');
+    console.log('========================================');
+    
+    showNotification('✅ Boleta abierta', 'success');
     
   } catch (error) {
-    console.error('Error abriendo visor de PDF:', error);
-    showNotification('❌ Error al abrir visor de PDF', 'error');
+    console.error('❌ ERROR AL ABRIR PDF:', error);
+    showNotification('❌ Error al abrir PDF: ' + error.message, 'error');
     
-    // Fallback: descargar usando la API directamente
-    SaleAPI.downloadPDF(saleId);
+    try {
+      SaleAPI.downloadPDF(saleId);
+      showNotification('📥 Descargando PDF...', 'info');
+    } catch (e) {
+      console.error('Fallback falló:', e);
+    }
   }
 }
 
@@ -722,6 +795,9 @@ async function completeSale() {
 // Inicializar POS
 document.addEventListener('DOMContentLoaded', () => {
   if (!requireAuth()) return;
+  
+  console.log('✅ POS Inicializado');
+  console.log('API URL:', API_URL);
   
   loadAvailableProducts();
   searchInput.focus();
